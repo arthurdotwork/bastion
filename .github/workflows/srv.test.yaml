@@ -1,0 +1,28 @@
+name: srv-test
+
+on:
+  workflow_call:
+    inputs:
+      go_version:
+        type: string
+        default: '1.24.2'
+      working_directory:
+        type: string
+        default: '.'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+          cache-dependency-path: ${{ inputs.working_directory}}/go.sum
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+      - name: Run tests
+        run: gotestsum --format pkgname-and-test-fails -- -race --count=1

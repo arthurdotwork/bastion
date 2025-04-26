@@ -1,0 +1,28 @@
+name: srv-lint
+
+on:
+  workflow_call:
+    inputs:
+      go_version:
+        type: string
+        default: '1.24.2'
+      golangci_lint_version:
+        type: string
+        default: 'v2.0.2'
+      working_directory:
+        type: string
+        default: '.'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+          cache-dependency-path: ${{inputs.working_directory}}/go.sum
+      - uses: golangci/golangci-lint-action@v7
+        with:
+          version: ${{ inputs.golangci_lint_version }}
+          working-directory: ${{ inputs.working_directory }}
