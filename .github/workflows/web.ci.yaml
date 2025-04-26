@@ -1,0 +1,14 @@
+name: web-ci
+
+on:
+  push:
+    branches-ignore:
+      - master
+    paths:
+      - 'apps/web/**'
+
+jobs:
+  fmt:
+    uses: ./.github/workflows/web.fmt.yaml
+    with:
+      working_directory: ./apps/web
