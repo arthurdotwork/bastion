@@ -8,17 +8,24 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
+import { Route as authAuthImport } from './routes/(auth)/auth'
+import { Route as appLayoutImport } from './routes/(app)/_layout'
+import { Route as appLayoutDashboardImport } from './routes/(app)/_layout.dashboard'
+
+// Create Virtual Routes
+
+const appImport = createFileRoute('/(app)')()
 
 // Create/Update Routes
 
-const AboutRoute = AboutImport.update({
-  id: '/about',
-  path: '/about',
+const appRoute = appImport.update({
+  id: '/(app)',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -26,6 +33,23 @@ const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
+} as any)
+
+const authAuthRoute = authAuthImport.update({
+  id: '/(auth)/auth',
+  path: '/auth',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const appLayoutRoute = appLayoutImport.update({
+  id: '/_layout',
+  getParentRoute: () => appRoute,
+} as any)
+
+const appLayoutDashboardRoute = appLayoutDashboardImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => appLayoutRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -39,51 +63,107 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutImport
+    '/(app)': {
+      id: '/(app)'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof appImport
       parentRoute: typeof rootRoute
+    }
+    '/(app)/_layout': {
+      id: '/(app)/_layout'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof appLayoutImport
+      parentRoute: typeof appRoute
+    }
+    '/(auth)/auth': {
+      id: '/(auth)/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof authAuthImport
+      parentRoute: typeof rootRoute
+    }
+    '/(app)/_layout/dashboard': {
+      id: '/(app)/_layout/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof appLayoutDashboardImport
+      parentRoute: typeof appLayoutImport
     }
   }
 }
 
 // Create and export the route tree
 
+interface appLayoutRouteChildren {
+  appLayoutDashboardRoute: typeof appLayoutDashboardRoute
+}
+
+const appLayoutRouteChildren: appLayoutRouteChildren = {
+  appLayoutDashboardRoute: appLayoutDashboardRoute,
+}
+
+const appLayoutRouteWithChildren = appLayoutRoute._addFileChildren(
+  appLayoutRouteChildren,
+)
+
+interface appRouteChildren {
+  appLayoutRoute: typeof appLayoutRouteWithChildren
+}
+
+const appRouteChildren: appRouteChildren = {
+  appLayoutRoute: appLayoutRouteWithChildren,
+}
+
+const appRouteWithChildren = appRoute._addFileChildren(appRouteChildren)
+
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof appLayoutRouteWithChildren
+  '/auth': typeof authAuthRoute
+  '/dashboard': typeof appLayoutDashboardRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof appLayoutRouteWithChildren
+  '/auth': typeof authAuthRoute
+  '/dashboard': typeof appLayoutDashboardRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/(app)': typeof appRouteWithChildren
+  '/(app)/_layout': typeof appLayoutRouteWithChildren
+  '/(auth)/auth': typeof authAuthRoute
+  '/(app)/_layout/dashboard': typeof appLayoutDashboardRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/auth' | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/' | '/auth' | '/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/(app)'
+    | '/(app)/_layout'
+    | '/(auth)/auth'
+    | '/(app)/_layout/dashboard'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  appRoute: typeof appRouteWithChildren
+  authAuthRoute: typeof authAuthRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  appRoute: appRouteWithChildren,
+  authAuthRoute: authAuthRoute,
 }
 
 export const routeTree = rootRoute
@@ -97,14 +177,32 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/about"
+        "/(app)",
+        "/(auth)/auth"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/about": {
-      "filePath": "about.tsx"
+    "/(app)": {
+      "filePath": "(app)",
+      "children": [
+        "/(app)/_layout"
+      ]
+    },
+    "/(app)/_layout": {
+      "filePath": "(app)/_layout.tsx",
+      "parent": "/(app)",
+      "children": [
+        "/(app)/_layout/dashboard"
+      ]
+    },
+    "/(auth)/auth": {
+      "filePath": "(auth)/auth.tsx"
+    },
+    "/(app)/_layout/dashboard": {
+      "filePath": "(app)/_layout.dashboard.tsx",
+      "parent": "/(app)/_layout"
     }
   }
 }
