@@ -7,8 +7,8 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": ["src/routeTree.gen.ts"],
-		"include": ["./biome.json", "src/*", "index.html", "vite.config.js"]
+		"include": ["./src/**/*"],
+		"ignore": ["./src/routeTree.gen.ts"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -25,7 +25,7 @@
 	},
 	"javascript": {
 		"formatter": {
-			"quoteStyle": "single"
+			"quoteStyle": "double"
 		}
 	}
 }
