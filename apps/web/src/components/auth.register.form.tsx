@@ -19,21 +19,28 @@ import {
 } from "@/components/ui/form.tsx";
 import { z } from "zod";
 
-const authFormSchema = z.object({
-	email: z.string().email(),
-	password: z.string(),
-});
+const authRegisterFormSchema = z
+	.object({
+		email: z.string().email(),
+		password: z.string(),
+		passwordConfirmation: z.string(),
+	})
+	.refine((data) => data.password === data.passwordConfirmation, {
+		message: "Passwords do not match",
+		path: ["passwordConfirmation"],
+	});
 
-const AuthForm = () => {
-	const form = useForm<z.infer<typeof authFormSchema>>({
-		resolver: zodResolver(authFormSchema),
+const AuthRegisterForm = () => {
+	const form = useForm<z.infer<typeof authRegisterFormSchema>>({
+		resolver: zodResolver(authRegisterFormSchema),
 		defaultValues: {
 			email: "",
 			password: "",
+			passwordConfirmation: "",
 		},
 	});
 
-	const onSubmit = (formData: z.infer<typeof authFormSchema>) => {
+	const onSubmit = (formData: z.infer<typeof authRegisterFormSchema>) => {
 		console.log(formData);
 	};
 
@@ -56,9 +63,9 @@ const AuthForm = () => {
 								className={cn("flex flex-col gap-6")}
 							>
 								<div className="flex flex-col items-center gap-2 text-center">
-									<h1 className="text-2xl font-bold">Login to your account</h1>
+									<h1 className="text-2xl font-bold">Create your account</h1>
 									<p className="text-balance text-sm text-muted-foreground">
-										Enter your email below to login to your account
+										Enter your email below to create your account
 									</p>
 								</div>
 								<div className="grid gap-6">
@@ -77,7 +84,7 @@ const AuthForm = () => {
 														/>
 													</FormControl>
 													<FormDescription>
-														This is the email you used to register.
+														This is the email you will use to login.
 													</FormDescription>
 													<FormMessage />
 												</FormItem>
@@ -90,17 +97,7 @@ const AuthForm = () => {
 											name={"password"}
 											render={({ field }) => (
 												<FormItem>
-													<FormLabel>
-														<div className="flex items-center">
-															<p>Password</p>
-															{/*<Link
-                                                                to={"/"}
-                                                                className="ml-auto text-sm underline-offset-4 hover:underline"
-                                                            >
-                                                                Forgot your password?
-                                                            </Link>*/}
-														</div>
-													</FormLabel>
+													<FormLabel>Password</FormLabel>
 													<FormControl>
 														<Input
 															type="password"
@@ -110,7 +107,30 @@ const AuthForm = () => {
 														/>
 													</FormControl>
 													<FormDescription>
-														This is the password you used to register.
+														This is the password you will use to login.
+													</FormDescription>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
+									<div className="grid gap-2">
+										<FormField
+											control={form.control}
+											name={"passwordConfirmation"}
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Confirm your password</FormLabel>
+													<FormControl>
+														<Input
+															type="password"
+															placeholder={"********"}
+															{...field}
+															className={"text-sm"}
+														/>
+													</FormControl>
+													<FormDescription>
+														Please confirm your password.
 													</FormDescription>
 													<FormMessage />
 												</FormItem>
@@ -118,9 +138,8 @@ const AuthForm = () => {
 										/>
 									</div>
 									<Button type="submit" className="w-full">
-										Authenticate
+										Create my account
 									</Button>
-
 									{/*<div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
 									<span className="relative z-10 bg-background px-2 text-muted-foreground">
 										Or continue with
@@ -137,12 +156,12 @@ const AuthForm = () => {
 								</Button>*/}
 								</div>
 								<div className="text-center text-sm">
-									Don't have an account?{" "}
+									Already have an account?{" "}
 									<Link
-										to={"/register"}
+										to={"/auth"}
 										className={cn("underline underline-offset-4")}
 									>
-										Sign up
+										Sign in
 									</Link>
 								</div>
 							</form>
@@ -157,4 +176,4 @@ const AuthForm = () => {
 	);
 };
 
-export default AuthForm;
+export default AuthRegisterForm;
