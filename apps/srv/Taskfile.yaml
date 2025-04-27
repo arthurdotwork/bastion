@@ -27,7 +27,7 @@ tasks:
     deps:
       - test:install
     cmds:
-      - gotestsum --format pkgname-and-test-fails -- -race --count=1
+      - gotestsum --format pkgname-and-test-fails -- -race --count=1 ./...
 
   build:
     desc: Build the project
