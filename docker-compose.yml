@@ -18,11 +18,16 @@ services:
     environment:
       APP_ENV: local
 
-  api:
+  srv:
     build:
       context: apps/srv
     ports:
       - "8080:8080"
+    environment:
+      DATABASE_HOST: psql
+      GIN_MODE: release
+    depends_on:
+      - psql
 
 volumes:
   psql_data:
