@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"log/slog"
+	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/arthurdotwork/alog"
+	"github.com/arthurdotwork/bastion/internal/infra/http"
 )
 
 func main() {
@@ -28,7 +30,15 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	<-ctx.Done()
-	slog.InfoContext(ctx, "shutting down")
-	return nil
+	srv := http.NewServer(env("HTTP_ADDR", ":8080"))
+
+	return srv.Serve(ctx)
+}
+
+func env(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+
+	return fallback
 }
