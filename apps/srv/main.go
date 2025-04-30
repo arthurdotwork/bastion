@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/arthurdotwork/alog"
-	"github.com/arthurdotwork/bastion/internal/infra/http"
-	"github.com/arthurdotwork/bastion/internal/infra/psql"
-	"github.com/arthurdotwork/bastion/internal/infra/queries"
+	"github.com/arthurdotwork/bastion/internal/infra/container"
+	"github.com/arthurdotwork/bastion/internal/infra/recover"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -27,46 +26,51 @@ func main() {
 	slog.InfoContext(ctx, "starting application")
 	if err := run(ctx); err != nil {
 		slog.ErrorContext(ctx, "error running application", "error", err)
+		return
 	}
 
 	slog.InfoContext(ctx, "application stopped")
 }
 
-func run(ctx context.Context) error {
-	db, err := psql.Connect(
-		ctx,
-		env("DATABASE_USERNAME", "postgres"),
-		env("DATABASE_PASSWORD", "postgres"),
-		env("DATABASE_HOST", "localhost"),
-		env("DATABASE_PORT", "5432"),
-		env("DATABASE_NAME", "postgres"),
-	)
-	if err != nil {
-		return fmt.Errorf("could not connect to postgres: %w", err)
+func run(parent context.Context) error {
+	ctx, cancel := context.WithCancel(parent)
+	defer cancel()
+
+	dependencyContainer := container.New(ctx)
+	defer dependencyContainer.Shutdown()
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		select {
+		case <-ctx.Done():
+			return nil
+		case err := <-dependencyContainer.InitializationErrorChannel():
+			slog.ErrorContext(ctx, "initialization error", "error", err)
+			return err
+		}
+	})
+
+	g.Go(func() error {
+		defer recover.Recover(ctx)
+
+		q := dependencyContainer.SetupQueries()
+		generatedUUID, err := q.GetUUID(ctx)
+		if err != nil {
+			return fmt.Errorf("could not get UUID: %w", err)
+		}
+		slog.InfoContext(ctx, "generated UUID", "uuid", generatedUUID)
+
+		srv := dependencyContainer.SetupHTTPServer()
+		if err := srv.Serve(ctx); err != nil {
+			return fmt.Errorf("could not start HTTP server: %w", err)
+		}
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("failed to run: %w", err)
 	}
-	defer db.Close() //nolint:errcheck
 
-	q, err := queries.Prepare(ctx, db)
-	if err != nil {
-		return fmt.Errorf("could not prepare queries: %w", err)
-	}
-	defer q.Close() //nolint:errcheck
-
-	generatedUUID, err := q.GetUUID(ctx)
-	if err != nil {
-		return fmt.Errorf("could not get UUID: %w", err)
-	}
-	slog.InfoContext(ctx, "generated UUID", "uuid", generatedUUID)
-
-	srv := http.NewServer(env("HTTP_ADDR", ":8080"))
-
-	return srv.Serve(ctx)
-}
-
-func env(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-
-	return fallback
+	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -36,6 +35,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		ReadHeaderTimeout: time.Second * 2,
 	}
 
+	s.Use(gin.Recovery())
 	s.GET("/checks/liveness", s.livenessProbe())
 	s.GET("/checks/readiness", s.readinessProbe(ctx))
 
@@ -54,7 +54,6 @@ func (s *Server) Serve(ctx context.Context) error {
 			return err
 		}
 
-		slog.InfoContext(ctx, "http server stopped")
 		return nil
 	})
 
