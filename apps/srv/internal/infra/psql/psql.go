@@ -18,27 +18,27 @@ type DB struct {
 	db *sqlx.DB
 }
 
-func Connect(ctx context.Context, username string, password string, host string, port string, dbname string) (DB, error) {
+func Connect(ctx context.Context, username string, password string, host string, port string, dbname string) (*DB, error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, dbname)
 
 	db, err := sqlx.ConnectContext(ctx, "pgx", dsn)
 	if err != nil {
-		return DB{}, fmt.Errorf("failed to connect: %w", err)
+		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
 
 	db.SetMaxOpenConns(5)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	if err := db.PingContext(ctx); err != nil {
-		return DB{}, fmt.Errorf("failed to ping database: %w", err)
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	node, err := sqalx.New(db)
 	if err != nil {
-		return DB{}, fmt.Errorf("failed to create sqalx node: %w", err)
+		return nil, fmt.Errorf("failed to create sqalx node: %w", err)
 	}
 
-	return DB{node, db}, nil
+	return &DB{node, db}, nil
 }
 
 func (db *DB) Close() error {

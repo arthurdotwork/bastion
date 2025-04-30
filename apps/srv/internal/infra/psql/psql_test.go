@@ -17,7 +17,7 @@ func TestConnect(t *testing.T) {
 	t.Run("it should return an error if credentials are wrong", func(t *testing.T) {
 		db, err := psql.Connect(ctx, "postgres", "wrong", "localhost", "5432", "postgres")
 		require.Error(t, err)
-		require.Empty(t, db)
+		require.Nil(t, db)
 	})
 
 	t.Run("it should connect to the database", func(t *testing.T) {
