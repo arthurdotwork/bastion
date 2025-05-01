@@ -11,7 +11,8 @@ on:
         default: '.'
 
 jobs:
-  test:
+  integration-test:
+    name: Run integration tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,5 +34,25 @@ jobs:
           cache-dependency-path: ${{ inputs.working_directory}}/go.sum
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@latest
+      - name: Install tern
+        run: go install github.com/jackc/tern/v2@latest
+      - name: Run migrations
+        run: tern migrate -m migrations -c migrations/tern.conf
       - name: Run tests
-        run: gotestsum --format pkgname-and-test-fails -- -race --count=1 ./...
+        run: gotestsum --format pkgname-and-test-fails -- -race --count=1 --tags=integration ./...
+  unit-test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+          cache-dependency-path: ${{ inputs.working_directory}}/go.sum
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+      - name: Run tests
+        run: gotestsum --format pkgname-and-test-fails -- -race --count=1 --tags=unit ./...
