@@ -19,15 +19,28 @@ tasks:
   test:install:
     desc: Install the test runner
     status:
-      - gotestsum version
+      - gotestsum --version
     cmds:
       - go install gotest.tools/gotestsum@latest
   test:
     desc: Run the tests
+    cmds:
+      - task: test:unit
+      - task: test:integration
+
+  test:unit:
+    desc: Run the unit tests
     deps:
       - test:install
     cmds:
-      - gotestsum --format pkgname-and-test-fails -- -race --count=1 ./...
+      - gotestsum --format pkgname-and-test-fails -- -race --count=1 --tags unit ./...
+
+  test:integration:
+    desc: Run the integration tests
+    deps:
+      - test:install
+    cmds:
+      - gotestsum --format pkgname-and-test-fails -- -race --count=1 --tags integration ./...
 
   build:
     desc: Build the project

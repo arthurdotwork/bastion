@@ -53,14 +53,9 @@ func run(parent context.Context) error {
 	g.Go(func() error {
 		defer recover.Recover(ctx)
 
-		q := dependencyContainer.SetupQueries()
-		generatedUUID, err := q.GetUUID(ctx)
-		if err != nil {
-			return fmt.Errorf("could not get UUID: %w", err)
-		}
-		slog.InfoContext(ctx, "generated UUID", "uuid", generatedUUID)
-
 		srv := dependencyContainer.SetupHTTPServer()
+		srv.POST("/v1/register", dependencyContainer.SetupRegisterHandler())
+
 		if err := srv.Serve(ctx); err != nil {
 			return fmt.Errorf("could not start HTTP server: %w", err)
 		}

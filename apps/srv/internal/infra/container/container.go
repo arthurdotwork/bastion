@@ -9,9 +9,15 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/arthurdotwork/bastion/internal/adapters/primary/http/handler"
+	"github.com/arthurdotwork/bastion/internal/adapters/secondary/hasher"
+	"github.com/arthurdotwork/bastion/internal/adapters/secondary/store"
+	"github.com/arthurdotwork/bastion/internal/domain/membership"
 	"github.com/arthurdotwork/bastion/internal/infra/http"
 	"github.com/arthurdotwork/bastion/internal/infra/psql"
 	"github.com/arthurdotwork/bastion/internal/infra/queries"
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Container struct {
@@ -68,6 +74,30 @@ func (c *Container) SetupHTTPServer() *http.Server {
 	return singleton(c, func() *http.Server {
 		srv := http.NewServer(env("HTTP_ADDR", ":8080"))
 		return srv
+	})
+}
+
+func (c *Container) SetupRegisterHandler() gin.HandlerFunc {
+	return singleton(c, func() gin.HandlerFunc {
+		return handler.Register(c.SetupMembershipRegisterService())
+	})
+}
+
+func (c *Container) SetupUserStore() *store.UserStore {
+	return singleton(c, func() *store.UserStore {
+		return store.NewUserStore(c.SetupDatabase(), c.SetupQueries())
+	})
+}
+
+func (c *Container) SetupBcryptHasher() *hasher.BcryptHasher {
+	return singleton(c, func() *hasher.BcryptHasher {
+		return hasher.NewBcryptHasher(bcrypt.DefaultCost)
+	})
+}
+
+func (c *Container) SetupMembershipRegisterService() *membership.RegisterService {
+	return singleton(c, func() *membership.RegisterService {
+		return membership.NewRegisterService(c.SetupUserStore(), c.SetupBcryptHasher())
 	})
 }
 

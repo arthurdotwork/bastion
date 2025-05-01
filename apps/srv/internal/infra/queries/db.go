@@ -24,17 +24,25 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
-	if q.getUUIDStmt, err = db.PrepareContext(ctx, getUUID); err != nil {
-		return nil, fmt.Errorf("error preparing query GetUUID: %w", err)
+	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
+	}
+	if q.getUserByEmailStmt, err = db.PrepareContext(ctx, getUserByEmail); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserByEmail: %w", err)
 	}
 	return &q, nil
 }
 
 func (q *Queries) Close() error {
 	var err error
-	if q.getUUIDStmt != nil {
-		if cerr := q.getUUIDStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getUUIDStmt: %w", cerr)
+	if q.createUserStmt != nil {
+		if cerr := q.createUserStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
+		}
+	}
+	if q.getUserByEmailStmt != nil {
+		if cerr := q.getUserByEmailStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserByEmailStmt: %w", cerr)
 		}
 	}
 	return err
@@ -74,15 +82,17 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db          DBTX
-	tx          *sql.Tx
-	getUUIDStmt *sql.Stmt
+	db                 DBTX
+	tx                 *sql.Tx
+	createUserStmt     *sql.Stmt
+	getUserByEmailStmt *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:          tx,
-		tx:          tx,
-		getUUIDStmt: q.getUUIDStmt,
+		db:                 tx,
+		tx:                 tx,
+		createUserStmt:     q.createUserStmt,
+		getUserByEmailStmt: q.getUserByEmailStmt,
 	}
 }

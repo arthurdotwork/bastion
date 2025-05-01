@@ -6,12 +6,11 @@ package queries
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 type Querier interface {
-	GetUUID(ctx context.Context) (uuid.UUID, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	GetUserByEmail(ctx context.Context, arg GetUserByEmailParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)
