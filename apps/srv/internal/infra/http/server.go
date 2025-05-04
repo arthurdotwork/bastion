@@ -18,15 +18,22 @@ type Server struct {
 	instantiatedAt time.Time
 }
 
-func NewServer(addr string) *Server {
+func NewServer(addr string, allowedOrigins []string) *Server {
+	srv := gin.New()
+	srv.Use(useCors(allowedOrigins))
+	srv.Use(gin.Recovery())
+
 	return &Server{
-		Engine:         gin.New(),
+		Engine:         srv,
 		addr:           addr,
 		instantiatedAt: time.Now().UTC(),
 	}
 }
 
 func (s *Server) Serve(ctx context.Context) error {
+	s.GET("/checks/liveness", s.livenessProbe())
+	s.GET("/checks/readiness", s.readinessProbe(ctx))
+
 	srv := &http.Server{
 		Addr:              s.addr,
 		Handler:           s,
@@ -34,10 +41,6 @@ func (s *Server) Serve(ctx context.Context) error {
 		WriteTimeout:      time.Second * 2,
 		ReadHeaderTimeout: time.Second * 2,
 	}
-
-	s.Use(gin.Recovery())
-	s.GET("/checks/liveness", s.livenessProbe())
-	s.GET("/checks/readiness", s.readinessProbe(ctx))
 
 	grp, _ := errgroup.WithContext(ctx)
 	grp.Go(func() error {

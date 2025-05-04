@@ -72,7 +72,8 @@ func (c *Container) SetupQueries() *queries.Queries {
 
 func (c *Container) SetupHTTPServer() *http.Server {
 	return singleton(c, func() *http.Server {
-		srv := http.NewServer(env("HTTP_ADDR", ":8080"))
+		// TODO: Replace allowed origins with a proper configuration.
+		srv := http.NewServer(env("HTTP_ADDR", ":8080"), []string{"http://localhost:5173"})
 		return srv
 	})
 }

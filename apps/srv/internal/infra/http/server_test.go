@@ -22,7 +22,7 @@ func TestServer_Serve(t *testing.T) {
 	defer cancel()
 
 	addr := fmt.Sprintf("127.0.0.1:%d", rand.Intn(16384)+49152)
-	srv := http.NewServer(addr)
+	srv := http.NewServer(addr, []string{"http://localhost:5173"})
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
