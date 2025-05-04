@@ -17,18 +17,10 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form.tsx";
-import { z } from "zod";
+import type { z } from "zod";
 
-const authRegisterFormSchema = z
-	.object({
-		email: z.string().email(),
-		password: z.string(),
-		passwordConfirmation: z.string(),
-	})
-	.refine((data) => data.password === data.passwordConfirmation, {
-		message: "Passwords do not match",
-		path: ["passwordConfirmation"],
-	});
+import { useRegisterMutation } from "@/hooks/register.ts";
+import { authRegisterFormSchema } from "@/schemas/register.ts";
 
 const AuthRegisterForm = () => {
 	const form = useForm<z.infer<typeof authRegisterFormSchema>>({
@@ -40,7 +32,13 @@ const AuthRegisterForm = () => {
 		},
 	});
 
+	const registerUserMutation = useRegisterMutation({
+		onSuccess: () => {},
+		onError: () => {},
+	});
+
 	const onSubmit = (formData: z.infer<typeof authRegisterFormSchema>) => {
+		registerUserMutation.mutate(formData);
 		console.log(formData);
 	};
 
