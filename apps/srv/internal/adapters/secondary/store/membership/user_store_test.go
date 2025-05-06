@@ -55,5 +55,37 @@ func TestUserStore_CreateUser(t *testing.T) {
 }
 
 func TestUserStore_GetUserByEmail(t *testing.T) {
+	t.Parallel()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	db, err := psql.Connect(ctx, "postgres", "postgres", "localhost", "5432", "postgres")
+	require.NoError(t, err)
+
+	tx, err := db.BeginTxx(ctx, nil)
+	require.NoError(t, err)
+	defer tx.Rollback() //nolint:errcheck
+
+	q := queries.New(tx.Tx())
+	userStore := membershipStore.NewUserStore(tx, q)
+
+	t.Run("it should not return an error if the user can not be found", func(t *testing.T) {
+		_, err := userStore.GetUserByEmail(ctx, "email@bastion.dev")
+		require.NoError(t, err)
+	})
+
+	t.Run("it should return the user", func(t *testing.T) {
+		user, err := q.CreateUser(ctx, queries.CreateUserParams{
+			Email:     "email@bastion.dev",
+			Password:  "password",
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		require.NoError(t, err)
+
+		foundUser, err := userStore.GetUserByEmail(ctx, user.Email)
+		require.NoError(t, err)
+		require.EqualValues(t, user.ID, foundUser.ID)
+	})
 }
