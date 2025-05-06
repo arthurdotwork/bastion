@@ -11,6 +11,16 @@ import (
 	"github.com/google/uuid"
 )
 
+type AccessToken struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+	// The token identifier identifies a unique token (JTI).
+	TokenIdentifier uuid.UUID    `json:"token_identifier"`
+	IssuedAt        time.Time    `json:"issued_at"`
+	ExpiresAt       time.Time    `json:"expires_at"`
+	RevokedAt       sql.NullTime `json:"revoked_at"`
+}
+
 type User struct {
 	ID        uuid.UUID    `json:"id"`
 	Username  string       `json:"username"`

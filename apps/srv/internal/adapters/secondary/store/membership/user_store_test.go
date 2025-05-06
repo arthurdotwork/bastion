@@ -1,13 +1,13 @@
 //go:build integration
 
-package store_test
+package membership_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/arthurdotwork/bastion/internal/adapters/secondary/store"
+	membershipStore "github.com/arthurdotwork/bastion/internal/adapters/secondary/store/membership"
 	"github.com/arthurdotwork/bastion/internal/domain/membership"
 	"github.com/arthurdotwork/bastion/internal/infra/psql"
 	"github.com/arthurdotwork/bastion/internal/infra/queries"
@@ -28,7 +28,7 @@ func TestUserStore_CreateUser(t *testing.T) {
 	defer tx.Rollback() //nolint:errcheck
 
 	q := queries.New(tx.Tx())
-	userStore := store.NewUserStore(tx, q)
+	userStore := membershipStore.NewUserStore(tx, q)
 
 	t.Run("it should create the user", func(t *testing.T) {
 		user := membership.User{

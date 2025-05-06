@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"os"
@@ -11,7 +12,10 @@ import (
 
 	"github.com/arthurdotwork/bastion/internal/adapters/primary/http/handler"
 	"github.com/arthurdotwork/bastion/internal/adapters/secondary/hasher"
-	"github.com/arthurdotwork/bastion/internal/adapters/secondary/store"
+	"github.com/arthurdotwork/bastion/internal/adapters/secondary/paseto"
+	authenticationStore "github.com/arthurdotwork/bastion/internal/adapters/secondary/store/authentication"
+	membershipStore "github.com/arthurdotwork/bastion/internal/adapters/secondary/store/membership"
+	"github.com/arthurdotwork/bastion/internal/domain/authentication"
 	"github.com/arthurdotwork/bastion/internal/domain/membership"
 	"github.com/arthurdotwork/bastion/internal/infra/http"
 	"github.com/arthurdotwork/bastion/internal/infra/psql"
@@ -84,9 +88,51 @@ func (c *Container) SetupRegisterHandler() gin.HandlerFunc {
 	})
 }
 
-func (c *Container) SetupUserStore() *store.UserStore {
-	return singleton(c, func() *store.UserStore {
-		return store.NewUserStore(c.SetupDatabase(), c.SetupQueries())
+func (c *Container) SetupAuthenticationHandler() gin.HandlerFunc {
+	return singleton(c, func() gin.HandlerFunc {
+		return handler.Authenticate(c.SetupAuthenticationService())
+	})
+}
+
+func (c *Container) SetupVerifyAuthenticationHandler() gin.HandlerFunc {
+	return singleton(c, func() gin.HandlerFunc {
+		return handler.VerifyAuthentication(c.SetupAuthenticationService())
+	})
+}
+
+func (c *Container) SetupAuthenticationService() *authentication.Service {
+	return singleton(c, func() *authentication.Service {
+		return authentication.NewService(c.SetupAuthenticationUserStore(), c.SetupBcryptHasher(), c.SetupPasetoProvider(), c.SetupAuthenticationAccessTokenStore())
+	})
+}
+
+func (c *Container) SetupAuthenticationUserStore() *authenticationStore.UserStore {
+	return singleton(c, func() *authenticationStore.UserStore {
+		return authenticationStore.NewUserStore(c.SetupDatabase(), c.SetupQueries())
+	})
+}
+
+func (c *Container) SetupAuthenticationAccessTokenStore() *authenticationStore.AccessTokenStore {
+	return singleton(c, func() *authenticationStore.AccessTokenStore {
+		return authenticationStore.NewAccessTokenStore(c.SetupDatabase(), c.SetupQueries())
+	})
+}
+
+func (c *Container) SetupPasetoProvider() *paseto.Provider {
+	return singleton(c, func() *paseto.Provider {
+		pasetoSecretKey, err := base64.StdEncoding.DecodeString(env("PASETO_SECRET_KEY", ""))
+		if err != nil {
+			c.recordInitializationError(fmt.Errorf("could not decode PASETO secret key: %w", err))
+			return nil
+		}
+
+		return paseto.NewProvider(pasetoSecretKey)
+	})
+}
+
+func (c *Container) SetupUserStore() *membershipStore.UserStore {
+	return singleton(c, func() *membershipStore.UserStore {
+		return membershipStore.NewUserStore(c.SetupDatabase(), c.SetupQueries())
 	})
 }
 
