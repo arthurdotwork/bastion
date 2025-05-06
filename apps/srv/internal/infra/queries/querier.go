@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (AccessToken, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetUserByEmail(ctx context.Context, arg GetUserByEmailParams) (User, error)
 }

@@ -3,20 +3,12 @@ import { ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form.tsx";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
 import type { z } from "zod";
 
 import { useRegisterMutation } from "@/hooks/register.ts";
@@ -32,14 +24,18 @@ const AuthRegisterForm = () => {
 		},
 	});
 
+	const emailValue = useWatch({ control: form.control, name: "email" });
+	const navigate = useNavigate();
+
 	const registerUserMutation = useRegisterMutation({
-		onSuccess: () => {},
+		onSuccess: async () => {
+			await navigate({ to: "/auth", search: { email: emailValue } });
+		},
 		onError: () => {},
 	});
 
 	const onSubmit = (formData: z.infer<typeof authRegisterFormSchema>) => {
 		registerUserMutation.mutate(formData);
-		console.log(formData);
 	};
 
 	return (
@@ -54,17 +50,12 @@ const AuthRegisterForm = () => {
 					</Link>
 				</div>
 				<div className="flex flex-1 items-center justify-center">
-					<div className="w-full max-w-xs">
+					<div className="w-full max-w-md">
 						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className={cn("flex flex-col gap-6")}
-							>
+							<form onSubmit={form.handleSubmit(onSubmit)} className={cn("flex flex-col gap-6")}>
 								<div className="flex flex-col items-center gap-2 text-center">
 									<h1 className="text-2xl font-bold">Create your account</h1>
-									<p className="text-balance text-sm text-muted-foreground">
-										Enter your email below to create your account
-									</p>
+									<p className="text-balance text-sm text-muted-foreground">Enter your email below to create your account</p>
 								</div>
 								<div className="grid gap-6">
 									<div className="grid gap-2">
@@ -75,15 +66,9 @@ const AuthRegisterForm = () => {
 												<FormItem>
 													<FormLabel>Email</FormLabel>
 													<FormControl>
-														<Input
-															placeholder={"email@example.com"}
-															{...field}
-															className={"text-sm"}
-														/>
+														<Input placeholder={"email@example.com"} {...field} className={"text-sm"} />
 													</FormControl>
-													<FormDescription>
-														This is the email you will use to login.
-													</FormDescription>
+													<FormDescription>This is the email you will use to login.</FormDescription>
 													<FormMessage />
 												</FormItem>
 											)}
@@ -97,16 +82,9 @@ const AuthRegisterForm = () => {
 												<FormItem>
 													<FormLabel>Password</FormLabel>
 													<FormControl>
-														<Input
-															type="password"
-															placeholder={"********"}
-															{...field}
-															className={"text-sm"}
-														/>
+														<Input type="password" placeholder={"********"} {...field} className={"text-sm"} />
 													</FormControl>
-													<FormDescription>
-														This is the password you will use to login.
-													</FormDescription>
+													<FormDescription>This is the password you will use to login.</FormDescription>
 													<FormMessage />
 												</FormItem>
 											)}
@@ -120,16 +98,9 @@ const AuthRegisterForm = () => {
 												<FormItem>
 													<FormLabel>Confirm your password</FormLabel>
 													<FormControl>
-														<Input
-															type="password"
-															placeholder={"********"}
-															{...field}
-															className={"text-sm"}
-														/>
+														<Input type="password" placeholder={"********"} {...field} className={"text-sm"} />
 													</FormControl>
-													<FormDescription>
-														Please confirm your password.
-													</FormDescription>
+													<FormDescription>Please confirm your password.</FormDescription>
 													<FormMessage />
 												</FormItem>
 											)}
@@ -155,10 +126,7 @@ const AuthRegisterForm = () => {
 								</div>
 								<div className="text-center text-sm">
 									Already have an account?{" "}
-									<Link
-										to={"/auth"}
-										className={cn("underline underline-offset-4")}
-									>
+									<Link to={"/auth"} search={{ email: emailValue }} className={cn("underline underline-offset-4")}>
 										Sign in
 									</Link>
 								</div>

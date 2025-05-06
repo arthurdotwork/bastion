@@ -24,6 +24,9 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.createAccessTokenStmt, err = db.PrepareContext(ctx, createAccessToken); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateAccessToken: %w", err)
+	}
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
@@ -35,6 +38,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.createAccessTokenStmt != nil {
+		if cerr := q.createAccessTokenStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createAccessTokenStmt: %w", cerr)
+		}
+	}
 	if q.createUserStmt != nil {
 		if cerr := q.createUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
@@ -82,17 +90,19 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                 DBTX
-	tx                 *sql.Tx
-	createUserStmt     *sql.Stmt
-	getUserByEmailStmt *sql.Stmt
+	db                    DBTX
+	tx                    *sql.Tx
+	createAccessTokenStmt *sql.Stmt
+	createUserStmt        *sql.Stmt
+	getUserByEmailStmt    *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                 tx,
-		tx:                 tx,
-		createUserStmt:     q.createUserStmt,
-		getUserByEmailStmt: q.getUserByEmailStmt,
+		db:                    tx,
+		tx:                    tx,
+		createAccessTokenStmt: q.createAccessTokenStmt,
+		createUserStmt:        q.createUserStmt,
+		getUserByEmailStmt:    q.getUserByEmailStmt,
 	}
 }

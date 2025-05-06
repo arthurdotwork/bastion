@@ -24,3 +24,7 @@ func (h *BcryptHasher) Hash(ctx context.Context, password string) (string, error
 
 	return string(bcryptHash), nil
 }
+
+func (h *BcryptHasher) Verify(ctx context.Context, password, hash string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+}

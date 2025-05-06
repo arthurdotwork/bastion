@@ -5,4 +5,4 @@ const Page = () => {
 	return <AuthRegisterForm />;
 };
 
-export const Route = createFileRoute("/(auth)/register")({ component: Page });
+export const Route = createFileRoute("/(auth)/_layout/register")({ component: Page });

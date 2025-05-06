@@ -1,40 +1,51 @@
 import { cn } from "@/lib/utils.ts";
-import { ShieldCheck } from "lucide-react";
+import { CircleX, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form.tsx";
-import { z } from "zod";
-
-const authFormSchema = z.object({
-	email: z.string().email(),
-	password: z.string(),
-});
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
+import { useAuthenticateWithPasswordMutation } from "@/hooks/authenticate.ts";
+import { authAuthenticateWithPasswordFormSchema, type authAuthenticateWithPasswordResponseSchema } from "@/schemas/authenticate.ts";
+import type { HTTPError } from "ky";
+import { useState } from "react";
+import type { z } from "zod";
 
 const AuthForm = () => {
-	const form = useForm<z.infer<typeof authFormSchema>>({
-		resolver: zodResolver(authFormSchema),
+	const searchParams = useSearch({ from: "/(auth)/_layout/auth" });
+
+	const [authenticationStatusCode, setAuthenticationStatusCode] = useState<number | null>(null);
+
+	const form = useForm<z.infer<typeof authAuthenticateWithPasswordFormSchema>>({
+		resolver: zodResolver(authAuthenticateWithPasswordFormSchema),
 		defaultValues: {
-			email: "",
+			email: searchParams.email ?? "",
 			password: "",
 		},
 	});
 
-	const onSubmit = (formData: z.infer<typeof authFormSchema>) => {
-		console.log(formData);
+	const navigate = useNavigate();
+
+	const handler = {
+		onSuccess: async (data: z.infer<typeof authAuthenticateWithPasswordResponseSchema>) => {
+			localStorage.setItem("bastion_at", data.accessToken);
+			await navigate({ to: "/dashboard", viewTransition: true });
+		},
+		onError: (err: HTTPError) => {
+			setAuthenticationStatusCode(err.response.status);
+		},
+	};
+
+	const useAuthenticateWithPassword = useAuthenticateWithPasswordMutation(handler);
+
+	const onSubmit = (formData: z.infer<typeof authAuthenticateWithPasswordFormSchema>) => {
+		console.log("oooo");
+		useAuthenticateWithPassword.mutate(formData);
 	};
 
 	return (
@@ -49,18 +60,22 @@ const AuthForm = () => {
 					</Link>
 				</div>
 				<div className="flex flex-1 items-center justify-center">
-					<div className="w-full max-w-xs">
+					<div className="w-full max-w-md">
 						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className={cn("flex flex-col gap-6")}
-							>
+							<form onSubmit={form.handleSubmit(onSubmit)} className={cn("flex flex-col gap-6")}>
 								<div className="flex flex-col items-center gap-2 text-center">
 									<h1 className="text-2xl font-bold">Login to your account</h1>
-									<p className="text-balance text-sm text-muted-foreground">
-										Enter your email below to login to your account
-									</p>
+									<p className="text-balance text-sm text-muted-foreground">Enter your email below to login to your account</p>
 								</div>
+								{authenticationStatusCode && (
+									<Alert variant="destructive">
+										<CircleX className="h-4 w-4" />
+										<AlertTitle>Authentication failed</AlertTitle>
+										<AlertDescription>
+											{authenticationStatusCode === 401 ? "Invalid credentials, please try again." : "An unknown error occurred, please retry in a moment."}
+										</AlertDescription>
+									</Alert>
+								)}
 								<div className="grid gap-6">
 									<div className="grid gap-2">
 										<FormField
@@ -70,15 +85,9 @@ const AuthForm = () => {
 												<FormItem>
 													<FormLabel>Email</FormLabel>
 													<FormControl>
-														<Input
-															placeholder={"email@example.com"}
-															{...field}
-															className={"text-sm"}
-														/>
+														<Input placeholder={"email@example.com"} {...field} className={"text-sm"} />
 													</FormControl>
-													<FormDescription>
-														This is the email you used to register.
-													</FormDescription>
+													<FormDescription>This is the email you used to register.</FormDescription>
 													<FormMessage />
 												</FormItem>
 											)}
@@ -102,16 +111,9 @@ const AuthForm = () => {
 														</div>
 													</FormLabel>
 													<FormControl>
-														<Input
-															type="password"
-															placeholder={"********"}
-															{...field}
-															className={"text-sm"}
-														/>
+														<Input type="password" placeholder={"********"} {...field} className={"text-sm"} />
 													</FormControl>
-													<FormDescription>
-														This is the password you used to register.
-													</FormDescription>
+													<FormDescription>This is the password you used to register.</FormDescription>
 													<FormMessage />
 												</FormItem>
 											)}
@@ -138,10 +140,7 @@ const AuthForm = () => {
 								</div>
 								<div className="text-center text-sm">
 									Don't have an account?{" "}
-									<Link
-										to={"/register"}
-										className={cn("underline underline-offset-4")}
-									>
+									<Link to={"/register"} className={cn("underline underline-offset-4")}>
 										Sign up
 									</Link>
 								</div>
