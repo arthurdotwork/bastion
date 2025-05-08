@@ -9,6 +9,7 @@ const tokenizerHook = ((request: KyRequest) => {
 }) as BeforeRequestHook;
 
 export const apiClient = ky.extend({
+	prefixUrl: "http://localhost:8080",
 	hooks: {
 		beforeRequest: [tokenizerHook, requestToSnakeCase],
 		afterResponse: [

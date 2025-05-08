@@ -34,23 +34,8 @@ func Authenticate(authenticationService *authentication.Service) gin.HandlerFunc
 	}
 }
 
-func VerifyAuthentication(authenticationService *authentication.Service) gin.HandlerFunc {
+func VerifyAuthentication() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := c.Request.Context()
-
-		accessToken := c.GetHeader("Authorization")
-		if accessToken == "" || len(accessToken) < 7 {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "missing access token"})
-			return
-		}
-
-		err := authenticationService.VerifyAccessToken(ctx, accessToken[7:])
-		if err != nil {
-			slog.ErrorContext(ctx, "failed to verify access token", "error", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid access token"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "access token is valid"})
+		c.JSON(http.StatusOK, gin.H{})
 	}
 }

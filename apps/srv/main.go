@@ -56,7 +56,10 @@ func run(parent context.Context) error {
 		srv := dependencyContainer.SetupHTTPServer()
 		srv.POST("/v1/register", dependencyContainer.SetupRegisterHandler())
 		srv.POST("/v1/authenticate", dependencyContainer.SetupAuthenticationHandler())
-		srv.GET("/v1/authenticate", dependencyContainer.SetupVerifyAuthenticationHandler())
+
+		authenticated := srv.Group("/")
+		authenticated.Use(dependencyContainer.SetupAuthenticationMiddleware())
+		authenticated.GET("/v1/authenticate", dependencyContainer.SetupVerifyAuthenticationHandler())
 
 		if err := srv.Serve(ctx); err != nil {
 			return fmt.Errorf("could not start HTTP server: %w", err)

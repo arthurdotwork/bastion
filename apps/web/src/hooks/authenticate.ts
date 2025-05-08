@@ -14,7 +14,7 @@ export const useAuthenticateWithPasswordMutation = ({
 }) => {
 	return useMutation({
 		mutationFn: async (data: z.infer<typeof authAuthenticateWithPasswordFormSchema>) => {
-			return apiClient.post("http://localhost:8080/v1/authenticate", { json: data }).json<z.infer<typeof authAuthenticateWithPasswordResponseSchema>>();
+			return apiClient.post("v1/authenticate", { json: data }).json<z.infer<typeof authAuthenticateWithPasswordResponseSchema>>();
 		},
 		onSuccess,
 		onError,
