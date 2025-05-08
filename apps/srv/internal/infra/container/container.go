@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/arthurdotwork/bastion/internal/adapters/primary/http/handler"
+	"github.com/arthurdotwork/bastion/internal/adapters/primary/http/middleware"
 	"github.com/arthurdotwork/bastion/internal/adapters/secondary/hasher"
 	"github.com/arthurdotwork/bastion/internal/adapters/secondary/paseto"
 	authenticationStore "github.com/arthurdotwork/bastion/internal/adapters/secondary/store/authentication"
@@ -96,7 +97,13 @@ func (c *Container) SetupAuthenticationHandler() gin.HandlerFunc {
 
 func (c *Container) SetupVerifyAuthenticationHandler() gin.HandlerFunc {
 	return singleton(c, func() gin.HandlerFunc {
-		return handler.VerifyAuthentication(c.SetupAuthenticationService())
+		return handler.VerifyAuthentication()
+	})
+}
+
+func (c *Container) SetupAuthenticationMiddleware() gin.HandlerFunc {
+	return singleton(c, func() gin.HandlerFunc {
+		return middleware.AuthenticationMiddleware(c.SetupAuthenticationService())
 	})
 }
 

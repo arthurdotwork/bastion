@@ -14,7 +14,7 @@ export const useRegisterMutation = ({
 }) => {
 	return useMutation({
 		mutationFn: async (data: z.infer<typeof authRegisterFormSchema>) => {
-			return apiClient.post("/v1/register", { json: data }).json();
+			return apiClient.post("v1/register", { json: data }).json();
 		},
 		onSuccess,
 		onError,
